@@ -51,6 +51,8 @@ export default {
                 
                 console.log('Inicio de sesión exitoso', response.data);
                 message.value = 'Inicio de sesión exitoso';
+
+                localStorage.setItem('token', response.data.token)
                 
                 Swal.fire({
                     icon: 'success',

@@ -3,7 +3,7 @@
         <img src="../assets/img/LogoSample_ByTailorBrands-removebg-preview.png" alt="">
         <div class="conheader">
             <h1>Menos residuos, más recompensas</h1>
-            <button class="Usuario">Usuario</button>
+            <button class="Usuario" >{{ recibeDatos.nombre }} <p class="headerP">{{ recibeDatos.puntuacion_usuario }}</p></button>
         </div>
     </header>
 
@@ -22,37 +22,42 @@
     </div>
 
     <div v-if="isFormVisible" class="form-container" @click.self="closeForm">
-      <div class="form-content">
-        <span @click="closeForm" class="close">&times;</span>
-        <h2>Reporte</h2>
-        <form @submit.prevent="submitForm" class="forReport">
-            <label for="">Tipo residuo</label>
-            <input type="password" id="text" v-model="formData.email" required><br><br>
+        <div class="form-content">
+            <span @click="closeForm" class="close">&times;</span>
+            <h2>Reporte</h2>
+            <form @submit.prevent="todasFun" class="forReport">
+                <label for="">Tipo residuo</label>
+                <select name="" id="" v-model="tipo_residuo">
+                    <option value="Ordinario">Ordinario</option>
+                    <option value="Reciclable">Reciclable</option>
+                    <option value="Orgánico">Orgánico</option>
+                </select><br><br>
 
-            <label for="name">Tipo de bolsa:</label><br>
-            <select name="" id="">
-                <option value="">Bolsa negra</option>
-                <option value="">Bolsa blanca</option>
-                <option value="">Bolsa verde</option>
-
-            </select><br><br>
-            
-            <button type="submit" class="btnReporte">Enviar</button>
-        </form>
-      </div>
+                <label for="name">Tipo de bolsa:</label><br>
+                <select name="" id="" v-model="tipo_bolsa">
+                    <option value="Negra">Bolsa negra</option>
+                    <option value="Blanca">Bolsa blanca</option>
+                    <option value="Verde">Bolsa verde</option>
+                </select><br><br>
+                
+                <button type="submit" class="btnReporte">Enviar</button>
+            </form>
+        </div>
     </div>
 
     <div id="conForComentarios">
-        <form id="formDenuncia">
-            <input type="text" placeholder="Decreto denuncia...">
-            <button>Denunciar</button>
+        <form id="formDenuncia" @submit.prevent="todasFun">
+            <input type="text" v-model="comentario" placeholder="Escribe tu denuncia...">
+            <button type="submit">Denunciar</button>
         </form>
     </div>
 
     <div id="comComentarios">
-        <h1>Usuario</h1>
-        <div class="Comentario">
-            <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Assumenda delectus similique voluptate fuga in ut ab quisquam eligendi repudiandae error, reiciendis numquam deserunt eos, omnis ullam, veniam doloribus adipisci! Consequuntur.</p>
+        <div v-for="(comen,index) in comentarios"::key="index">
+            <h1>{{ comen.nombre_usuario }}</h1>
+            <div class="Comentario">
+                <p>{{ comen.comentario }}</p>
+            </div>
         </div>
     </div>
     
@@ -111,29 +116,141 @@
 
 
 <script>
+import { ref,onMounted } from 'vue';
+import axios, { AxiosHeaders } from 'axios';
+import Swal from 'sweetalert2';
 
 export default {
-    data() {
-        return {
-            isFormVisible: false, // Controla la visibilidad del formulario
-            formData: {
-                name: '',
-                email: ''
+    setup() {
+        const isFormVisible = ref(false);
+        const tipo_residuo = ref('');
+        const tipo_bolsa = ref('');
+        const message = ref('');
+        const message2 = ref('');
+        const message3 = ref('');
+        const comentario = ref('');
+        const recibeDatos = ref([]);
+        const comentarios = ref([]);
+
+        const openForm = () => {
+            isFormVisible.value = true; // Mostrar el formulario
+        };
+
+        const closeForm = () => {
+            isFormVisible.value = false; // Ocultar el formulario
+        };
+
+        const mandarDenuncia = async () => {
+            try {
+                const response = await axios.post('http://localhost:10101/createWasteReport', {
+                    
+                    tipo_residuo: tipo_residuo.value,
+                    tipo_bolsa: tipo_bolsa.value
+                },{
+                    headers:{
+                        Authorization:`Bearer ${localStorage.getItem('token')}`
+                    }
+                });
+                message.value = response.data.message;
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Reporte exitoso',
+                    text: 'Disfruta de los comentarios'
+                }).then(() => {
+            window.location.reload(); // Recargar la página
+        });
+            } catch (error) {
+                message.value = 'Error al reporte';
+                console.error('Error al reporte', error);
+
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error al hacer el reporte',
+                    text: error
+                });
             }
         };
-    },
-    methods: {
-        openForm() {
-        this.isFormVisible = true; // Mostrar el formulario
-        },
-        closeForm() {
-        this.isFormVisible = false; // Ocultar el formulario
-        },
-        submitForm() {
-        console.log('Formulario enviado:', this.formData);
-        // Aquí puedes agregar más lógica para manejar el formulario
-        this.closeForm(); // Cierra el formulario después de enviarlo
+
+        const submitForm = () => {
+            console.log('Formulario enviado');
+        };
+
+
+        const enviarComentario = async() => {
+            try{
+                const response = await axios.post('http://localhost:10101/createComplaint',{
+                    comentario:comentario.value
+                },{
+                    headers:{
+                        Authorization:`Bearer ${localStorage.getItem('token')}`
+                    }
+                })
+                message2.value = response.data.message;
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Reporte exitoso',
+                    text: 'Disfruta de los comentarios'
+                });
+            }catch(error){
+                message2.value = 'Error al reporte';
+                console.error('Error al reporte', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error al hacer el reporte',
+                    text: error
+                });
+            }
         }
+
+        const datosUsuario = async() => {
+            try {
+                const response = await axios.get('http://localhost:10101/user',{
+                    headers:{
+                        Authorization:`Bearer ${localStorage.getItem('token')}`
+                    }
+                });
+                recibeDatos.value = response.data;
+                message3.value = response.data.message;
+            } catch(error) {
+                message3.value = 'Error al traer datos';
+                console.error('Error al traer datos', error);
+            }
+        };
+
+        const recibeComentarios = async() => {
+            try{
+                const response = await axios.get('http://localhost:10101/complaints')
+                comentarios.value = response.data
+                console.log('Datos extraidos meloooo', response.data)
+            }catch(error){
+                console.error('Error con los comentarios', error)
+            }
+        }
+
+        onMounted(() => {
+            datosUsuario();
+            recibeComentarios();
+        });
+
+        const todasFun = () => {
+            mandarDenuncia();
+            submitForm();
+            enviarComentario();
+            closeForm();
+        };
+
+        return {
+            isFormVisible,
+            recibeDatos,
+            tipo_residuo,
+            tipo_bolsa,
+            openForm,
+            closeForm,
+            todasFun,
+            comentario,
+            comentarios,
+            message
+        };
     }
 };
 
@@ -165,20 +282,33 @@ export default {
 }
 
 .conheader button{
-    width: 30%;
+    width: 20%;
     height: 40px;
     background-color: rgba(104, 150, 46, 1);
     border-radius: 10px;
     border:  2px solid black;
-    padding: 5px 10px;
+    padding-left: 40px;
+    font-size: 20px;
     font-family: 'Josefin Sans';
     transition: all 1.2s;
     cursor: pointer;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
 }
 .conheader{
     width: 70%;
     display: flex;
     justify-content: center;
+}
+.headerP{
+    width: 14%;
+    height: 23px;
+    border-radius: 50%;
+    padding-top: 7px;
+    color: white;
+    background-color: rgb(0, 0, 0);
+    font-size: 13px;
 }
 #conGmin{
     width: 100%;

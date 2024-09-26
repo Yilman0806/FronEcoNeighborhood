@@ -1,59 +1,84 @@
 <template>
-
     <header id="header">
         <img src="../assets/img/LogoSample_ByTailorBrands-removebg-preview.png" alt="">
         <h1>Bienvenido Admin</h1>
     </header>
 
-
-    <div class="tarjetas">
-
-        <div class="tarjeta">
-            <h1>CASA</h1>
-            <h3>Puntuación:</h3>
-            <h3>Cantidad de bolsas:</h3>
+    <div class="tarjetas" >
+        <div class="tarjeta" v-for="(hogares,index) in reciboHogares"::key="index">
+            <h1>{{ hogares.nombre_hogar }}</h1>
+            <h3>Puntuacion: {{ hogares.puntuacion_hogar }}</h3>
+            <h3>Cantidad de Bolsas: {{ hogares.cantidad_bolsas }}</h3>
 
             <button @click="openForm" class="btnReporte">Reporte</button>
         </div>
     </div>
 
     <div v-if="isFormVisible" class="form-container" @click.self="closeForm">
-      <div class="form-content">
-        <span @click="closeForm" class="close">&times;</span>
-        <h2>Reporte</h2>
-        <form @submit.prevent="submitForm" class="forReport">
-          <input type="text" id="name" v-model="formData.name" placeholder="Ecribe tu comentario..."required><br><br>
-          <button type="submit" class="btnReporte">Enviar</button>
-        </form>
-      </div>
+        <div class="form-content">
+            <span @click="closeForm" class="close">&times;</span>
+            <h2>Reporte</h2>
+            <form @submit.prevent="submitForm" class="forReport">
+                <input type="text" id="name" v-model="formData.name" placeholder="Escribe tu comentario..." required><br><br>
+                <button type="submit" class="btnReporte">Enviar</button>
+            </form>
+        </div>
     </div>
 </template>
 
+
 <script>
-export default{
-    data() {
-        return {
-            isFormVisible: false, // Controla la visibilidad del formulario
-            formData: {
-                name: '',
-                email: ''
-            }
+import { ref,onMounted } from 'vue';
+import axios from 'axios';
+
+export default {
+    setup() {
+        const reciboHogares = ref([])
+
+
+        // Define las variables reactivas
+        const isFormVisible = ref(false); // Controla la visibilidad del formulario
+        const formData = ref('');
+
+        // Define las funciones
+        const openForm = () => {
+            isFormVisible.value = true; // Mostrar el formulario
         };
-    },
-    methods: {
-        openForm() {
-        this.isFormVisible = true; // Mostrar el formulario
-        },
-        closeForm() {
-        this.isFormVisible = false; // Ocultar el formulario
-        },
-        submitForm() {
-        console.log('Formulario enviado:', this.formData);
-        // Aquí puedes agregar más lógica para manejar el formulario
-        this.closeForm(); // Cierra el formulario después de enviarlo
+
+        const closeForm = () => {
+            isFormVisible.value = false; // Ocultar el formulario
+        };
+
+        const submitForm = () => {
+            console.log('Formulario enviado:', formData.value);
+            // Aquí puedes agregar más lógica para manejar el formulario
+            closeForm(); // Cierra el formulario después de enviarlo
+        };
+
+        const recibeHogares = async() =>{
+            try{
+                const response = await axios.get('http://localhost:10101/hogares')
+                reciboHogares.value = response.data
+                console.log('Datos extraidos')
+            }catch(error){
+                console.error('El error es',error)
+            }
         }
+
+        onMounted(() => {
+            recibeHogares();
+        })
+        // Retorna las variables y funciones que quieres exponer en la plantilla
+        return {
+            isFormVisible,
+            reciboHogares,
+            formData,
+            openForm,
+            closeForm,
+            submitForm
+        };
     }
-}
+};
 </script>
 
 <style>
